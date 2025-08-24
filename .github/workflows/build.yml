@@ -1,53 +1,58 @@
-name: Build luci-app-auto-login IPK
+name: Build OpenWrt Luci Plugin
 
 on:
-  workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-    - name: Install dependencies
+    - name: Setup dependencies
       run: |
         sudo apt update
-        sudo apt install -y build-essential git subversion libncurses5-dev zlib1g-dev gawk flex quilt xsltproc wget unzip python3 python3-pip python3-setuptools python3-wheel
+        sudo apt install -y build-essential libncurses5-dev gawk git subversion unzip python3 python3-pip
 
-    - name: Clone OpenWrt 23.05.5
+    - name: Download OpenWrt
       run: |
-        git clone -b v23.05.5 https://github.com/openwrt/openwrt.git openwrt
+        mkdir openwrt
         cd openwrt
-        # 清理旧 feeds 并更新
-        ./scripts/feeds clean
-        for i in {1..3}; do ./scripts/feeds update -a && break || sleep 5; done
-        ./scripts/feeds install -a
+        git init
+        git remote add origin https://github.com/openwrt/openwrt.git
+        git fetch --depth 1 origin master
+        git checkout FETCH_HEAD
+        cd ..
 
-    - name: Copy plugin
+    - name: Copy plugin to OpenWrt package
       run: |
         mkdir -p openwrt/package/luci-app-auto-login
-        cp -r * openwrt/package/luci-app-auto-login/ || true
-        # 忽略无法复制自身目录的错误
+        cp -r luci root Makefile README.md openwrt/package/luci-app-auto-login/
 
-    - name: Configure target
+    - name: Update feeds
       run: |
         cd openwrt
-        # 使用标准 x86_64 目标测试，避免 amlogic 报错
-        echo "CONFIG_TARGET_x86_64=y" > .config
-        echo "CONFIG_PACKAGE_luci-app-auto-login=y" >> .config
-        make defconfig
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+
+    - name: Build toolchain
+      run: |
+        cd openwrt
+        make tools/install -j$(nproc)
+        make package/libs/toolchain/compile -j$(nproc)
 
     - name: Compile plugin
       run: |
         cd openwrt
-        make package/luci-app-auto-login/compile V=s
+        make package/luci-app-auto-login/compile V=s -j$(nproc)
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
+    - name: Upload built plugin
+      uses: actions/upload-artifact@v3
       with:
         name: luci-app-auto-login-ipk
-        path: openwrt/bin/packages/*/luci/luci-app-auto-login*.ipk
+        path: openwrt/bin/packages/*/*/luci-app-auto-login*.ipk
