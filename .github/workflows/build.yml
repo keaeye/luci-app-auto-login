@@ -16,8 +16,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y build-essential git subversion libncurses5-dev zlib1g-dev gawk flex quilt xsltproc wget unzip python3 python3-venv python3-pip
-        python3 -m pip install --upgrade setuptools
+        sudo apt install -y build-essential git subversion libncurses5-dev zlib1g-dev gawk flex quilt xsltproc wget unzip python3 python3-distutils python3-setuptools
 
     - name: Clone OpenWrt 23.05.5
       run: |
@@ -28,19 +27,19 @@ jobs:
 
     - name: Copy plugin
       run: |
-        mkdir -p ./openwrt/package/luci-app-auto-login
-        shopt -s extglob
-        cp -r !(.github|openwrt) ./openwrt/package/luci-app-auto-login/
+        cp -r ./luci-app-auto-login ./openwrt/package/
 
     - name: Configure target
       run: |
         cd openwrt
-        echo "CONFIG_TARGET_amlogic=y" > .config
-        echo "CONFIG_TARGET_amlogic_meson8b=y" >> .config
-        echo "CONFIG_PACKAGE_luci-app-auto-login=y" >> .config
+        cat > .config <<EOF
+CONFIG_TARGET_amlogic=y
+CONFIG_TARGET_amlogic_meson8b=y
+CONFIG_PACKAGE_luci-app-auto-login=y
+EOF
         make defconfig
 
-    - name: Compile plugin
+    - name: Compile luci-app-auto-login only
       run: |
         cd openwrt
         make package/luci-app-auto-login/compile V=s
