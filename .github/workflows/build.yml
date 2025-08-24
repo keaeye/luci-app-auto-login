@@ -16,7 +16,8 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y build-essential git subversion libncurses5-dev zlib1g-dev gawk flex quilt xsltproc wget unzip python3 python3-distutils python3-setuptools
+        sudo apt install -y build-essential git subversion libncurses5-dev zlib1g-dev gawk flex quilt xsltproc wget unzip python3 python3-setuptools
+        python3 -m ensurepip --upgrade
 
     - name: Clone OpenWrt 23.05.5
       run: |
@@ -37,7 +38,7 @@ jobs:
         echo "CONFIG_PACKAGE_luci-app-auto-login=y" >> .config
         make defconfig
 
-    - name: Compile luci-app-auto-login only
+    - name: Compile plugin
       run: |
         cd openwrt
         make package/luci-app-auto-login/compile V=s
