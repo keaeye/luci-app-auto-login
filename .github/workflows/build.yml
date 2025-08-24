@@ -20,10 +20,10 @@ jobs:
           sudo apt update
           sudo apt install -y build-essential git wget unzip python3 python3-venv
 
-      # 3. 下载 OpenWrt 23.05.5 SDK
+      # 3. 下载 OpenWrt 23.05 SDK
       - name: Download OpenWrt 23.05 SDK for meson8b
         run: |
-          wget https://downloads.openwrt.org/releases/23.05.5/targets/amlogic/meson8b/openwrt-sdk-23.05.5-meson-meson8b_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
+          wget https://dl.openwrt.ai/releases/23.05/targets/amlogic/meson8b/openwrt-sdk-23.05.5-meson-meson8b_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
           tar -Jxvf openwrt-sdk-*.tar.xz
           mv openwrt-sdk-* openwrt-sdk
 
