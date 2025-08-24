@@ -1,0 +1,56 @@
+name: Build and Release luci-app-auto-login
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential git wget unzip python3-distutils
+
+      - name: Download OpenWrt 23.05.5 SDK for meson8b
+        run: |
+          wget https://downloads.openwrt.org/releases/23.05.5/targets/amlogic/meson8b/openwrt-sdk-23.05.5-meson-meson8b_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
+          tar -Jxvf openwrt-sdk-*.tar.xz
+          mv openwrt-sdk-* openwrt-sdk
+
+      - name: Build IPK
+        run: |
+          cd openwrt-sdk
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+          cp -r ../luci-app-auto-login package/
+
+          cat <<EOF > .config
+CONFIG_TARGET_amlogic=y
+CONFIG_TARGET_amlogic_meson8b=y
+CONFIG_PACKAGE_luci-app-auto-login=y
+EOF
+
+          make defconfig
+          make package/luci-app-auto-login/compile V=s
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: luci-app-auto-login
+          path: openwrt-sdk/bin/packages/*/luci/luci-app-auto-login*.ipk
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ github.run_number }}
+          name: "Auto Login Build #${{ github.run_number }}"
+          files: openwrt-sdk/bin/packages/*/luci/luci-app-auto-login*.ipk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
