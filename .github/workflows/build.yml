@@ -1,9 +1,9 @@
 name: Build luci-app-auto-login IPK
 
 on:
-  workflow_dispatch:   # 手动触发
+  workflow_dispatch:
   push:
-    branches: [main]   # push 到 main 分支自动触发
+    branches: [main]
 
 jobs:
   build:
@@ -29,7 +29,8 @@ jobs:
     - name: Copy plugin
       run: |
         mkdir -p ./openwrt/package/luci-app-auto-login
-        cp -r ./* ./openwrt/package/luci-app-auto-login/
+        shopt -s extglob
+        cp -r !(.github|openwrt) ./openwrt/package/luci-app-auto-login/
 
     - name: Configure target
       run: |
