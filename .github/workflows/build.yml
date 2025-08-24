@@ -32,11 +32,9 @@ jobs:
     - name: Configure target
       run: |
         cd openwrt
-        cat > .config <<EOF
-CONFIG_TARGET_amlogic=y
-CONFIG_TARGET_amlogic_meson8b=y
-CONFIG_PACKAGE_luci-app-auto-login=y
-EOF
+        echo "CONFIG_TARGET_amlogic=y" > .config
+        echo "CONFIG_TARGET_amlogic_meson8b=y" >> .config
+        echo "CONFIG_PACKAGE_luci-app-auto-login=y" >> .config
         make defconfig
 
     - name: Compile luci-app-auto-login only
