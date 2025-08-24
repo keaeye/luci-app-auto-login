@@ -10,20 +10,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. 检出代码
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # 2. 安装依赖
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y build-essential git wget unzip python3-distutils
 
-      - name: Download OpenWrt 23.05.5 SDK for meson8b
+      # 3. 下载 OpenWrt 23.05.5 SDK
+      - name: Download OpenWrt 23.05 SDK for meson8b
         run: |
           wget https://downloads.openwrt.org/releases/23.05.5/targets/amlogic/meson8b/openwrt-sdk-23.05.5-meson-meson8b_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
           tar -Jxvf openwrt-sdk-*.tar.xz
           mv openwrt-sdk-* openwrt-sdk
 
+      # 4. 编译插件
       - name: Build IPK
         run: |
           cd openwrt-sdk
@@ -31,21 +35,22 @@ jobs:
           ./scripts/feeds install -a
           cp -r ../luci-app-auto-login package/
 
-          cat <<EOF > .config
-CONFIG_TARGET_amlogic=y
-CONFIG_TARGET_amlogic_meson8b=y
-CONFIG_PACKAGE_luci-app-auto-login=y
-EOF
+          # 安全生成 .config 文件
+          echo "CONFIG_TARGET_amlogic=y" > .config
+          echo "CONFIG_TARGET_amlogic_meson8b=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-auto-login=y" >> .config
 
           make defconfig
           make package/luci-app-auto-login/compile V=s
 
+      # 5. 上传构建产物
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: luci-app-auto-login
           path: openwrt-sdk/bin/packages/*/luci/luci-app-auto-login*.ipk
 
+      # 6. 创建 GitHub Release
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
