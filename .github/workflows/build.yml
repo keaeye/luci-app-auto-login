@@ -28,7 +28,7 @@ jobs:
     - name: Copy plugin to OpenWrt package directory
       run: |
         mkdir -p openwrt/package/luci-app-auto-login
-        cp -r luci root Makefile README.md openwrt/package/luci-app-auto-login/
+        cp -r luci root Makefile openwrt/package/luci-app-auto-login/ || true
 
     - name: Configure target
       run: |
