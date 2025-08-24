@@ -1,4 +1,4 @@
-name: Build and Release luci-app-auto-login IPK
+name: Build luci-app-auto-login IPK
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y build-essential git subversion libncurses5-dev zlib1g-dev gawk flex quilt xsltproc wget unzip python3 python3-pip
+        sudo apt install -y build-essential git subversion libncurses5-dev zlib1g-dev gawk flex quilt xsltproc wget unzip python3 python3-pip python3-setuptools
 
     - name: Clone OpenWrt 23.05.5
       run: |
@@ -26,7 +26,9 @@ jobs:
         ./scripts/feeds install -a
 
     - name: Copy plugin to OpenWrt package directory
-      run: cp -r . ./openwrt/package/luci-app-auto-login
+      run: |
+        mkdir -p openwrt/package/luci-app-auto-login
+        cp -r luci root Makefile README.md openwrt/package/luci-app-auto-login/
 
     - name: Configure target
       run: |
@@ -41,25 +43,8 @@ jobs:
         cd openwrt
         make package/luci-app-auto-login/compile V=s
 
-    - name: Upload IPK as artifact
+    - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: luci-app-auto-login-ipk
         path: openwrt/bin/packages/*/luci/luci-app-auto-login*.ipk
-
-    - name: Create GitHub Release
-      id: create_release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: v${{ github.run_number }}
-        name: "luci-app-auto-login v${{ github.run_number }}"
-        body: "Automatically built luci-app-auto-login.ipk from commit ${{ github.sha }}"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Upload IPK to Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: openwrt/bin/packages/*/luci/luci-app-auto-login*.ipk
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
